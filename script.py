@@ -1,0 +1,90 @@
+from flask import Flask, jsonify, render_template, request, redirect
+import requests, PIL.Image, io
+
+app = Flask(__name__)
+
+degree = True
+
+def getWeather(location: str) -> str:
+    global degree
+    query:str = f'http://api.weatherapi.com/v1/current.json?key=905dd4cb1fac462fbf9205513240406&q={location}&aqi=no'
+    response = requests.get(query).json()
+    if degree == True:
+        temp = response.get('current').get('temp_c')
+        print('True: ', temp, degree)
+    else:
+        temp = response.get('current').get('temp_f')
+        print('False: ', temp, degree)
+    text = response.get('current').get('condition').get('text')
+    region = response.get('location').get('region')
+    city = response.get('location').get('name')
+    getImage(response)
+    if degree == True:
+        return f'{temp} °C', text, region, city
+    else:
+        return f'{temp} °F', text, region, city
+
+def getImage(response):
+        icon = response.get('current').get('condition').get('icon')
+        iconSplit = icon.split('/')
+        iconSplit[-3] = '128x128'
+        icon = '/'.join(iconSplit)
+        imgQuery:str = f'https:{icon}'
+
+        img_data = requests.get(imgQuery).content
+        image = PIL.Image.open(io.BytesIO(img_data))
+        image.save('static/img/weather.png')
+
+content, text, region, city = getWeather('Toronto')
+
+
+last_location = 'toronto'
+
+@app.route('/', methods=["POST", "GET"])
+def index():
+    last_location_tmp=''
+    global content, text, region, city, last_location, degree
+    if request.method == "POST":
+        try:
+            if request.is_json:
+                content = request.json['City']
+                degree = request.json['state']
+                if degree == 'true':
+                    degree = True
+                else:
+                    degree = False
+            else:
+                content = request.form['City']
+            if content == '':
+                content = last_location
+            last_location_tmp = content
+            content, text, region, city = getWeather(content)
+            last_location = last_location_tmp
+            if request.is_json:
+                return jsonify({"content": content, "text": text, "region": region, "city": city})
+            # return redirect('/')
+        except:
+            if request.is_json:
+                degree = request.json['state']
+                if degree == 'true':
+                    degree = True
+                else:
+                    degree = False
+            content, text, region, city = getWeather(last_location)
+            if request.is_json:
+                return jsonify({"content": content, "text": text, "region": region, "city": city})
+            return redirect('/')
+    return render_template('index.html', content=content, city=city, region=region, text=text)
+
+@app.route('/submit', methods=["POST"])
+def submit():
+    global degree
+    degree = request.json['state']
+    return request.json
+
+def main() -> None:
+    app.run()
+
+
+if __name__ == "__main__":
+    main()
