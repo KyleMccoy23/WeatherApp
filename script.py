@@ -1,13 +1,19 @@
 from flask import Flask, jsonify, render_template, request, redirect
 import requests, PIL.Image, io
 
+from os import getenv
+from dotenv import load_dotenv
+load_dotenv()
+
 app = Flask(__name__)
 
 degree = True
 
+key = getenv('API_KEY')
+
 def getWeather(location: str) -> str:
-    global degree
-    query:str = f'http://api.weatherapi.com/v1/current.json?key=905dd4cb1fac462fbf9205513240406&q={location}&aqi=no'
+    global degree, key
+    query:str = f'http://api.weatherapi.com/v1/current.json?key={key}&q={location}&aqi=no'
     response = requests.get(query).json()
     if degree == True:
         temp = response.get('current').get('temp_c')
@@ -62,7 +68,7 @@ def index():
             last_location = last_location_tmp
             if request.is_json:
                 return jsonify({"content": content, "text": text, "region": region, "city": city})
-            # return redirect('/')
+            return redirect('/')
         except:
             if request.is_json:
                 degree = request.json['state']
@@ -75,12 +81,6 @@ def index():
                 return jsonify({"content": content, "text": text, "region": region, "city": city})
             return redirect('/')
     return render_template('index.html', content=content, city=city, region=region, text=text)
-
-@app.route('/submit', methods=["POST"])
-def submit():
-    global degree
-    degree = request.json['state']
-    return request.json
 
 def main() -> None:
     app.run()

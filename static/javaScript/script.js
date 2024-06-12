@@ -2,7 +2,7 @@
 
 if (!localStorage.getItem('state')) {
     localStorage.setItem('state', 'true');
-}
+};
 
 const box = document.getElementById("switchBox");
 
@@ -11,7 +11,7 @@ if (localStorage.getItem('state') === 'true') {
 }
 else {
     box.removeAttribute("checked");
-}
+};
 
 box.addEventListener("click", function() {
 
@@ -46,29 +46,5 @@ box.addEventListener("click", function() {
     .catch(error => {
         console.error('Error:', error);
     });
-})
-
-
-// function submit() {
-//     fetch('/submit', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({ state: box.checked })
-//     })
-//     .then(function(response) {
-//         return response.json();
-//     })
-//     .then(function(data) {
-//         // Handle the response from the Flask app
-//         console.log(data);
-//         localStorage.setItem('state', data.state);
-//     })
-//     .catch(function(error) {
-//         console.log(error);
-//     });
-// }
-
-// box.addEventListener("click", submit);
+});
 
