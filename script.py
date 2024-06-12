@@ -4,12 +4,12 @@ import requests, PIL.Image, io
 from os import getenv
 from dotenv import load_dotenv
 load_dotenv()
+key = getenv('API_KEY')
 
 app = Flask(__name__)
 
 degree = True
-
-key = getenv('API_KEY')
+last_location = 'toronto'
 
 def getWeather(location: str) -> str:
     global degree, key
@@ -17,10 +17,8 @@ def getWeather(location: str) -> str:
     response = requests.get(query).json()
     if degree == True:
         temp = response.get('current').get('temp_c')
-        print('True: ', temp, degree)
     else:
         temp = response.get('current').get('temp_f')
-        print('False: ', temp, degree)
     text = response.get('current').get('condition').get('text')
     region = response.get('location').get('region')
     city = response.get('location').get('name')
@@ -42,9 +40,6 @@ def getImage(response):
         image.save('static/img/weather.png')
 
 content, text, region, city = getWeather('Toronto')
-
-
-last_location = 'toronto'
 
 @app.route('/', methods=["POST", "GET"])
 def index():
