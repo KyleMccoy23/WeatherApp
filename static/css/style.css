@@ -1,13 +1,13 @@
+
 body {
-    background-color: lightblue;
-    margin: 0px;
+  background-color: lightblue;
 }
 
 nav {
     background-color: white;
     height: 12vh;
     text-align: center;
-    width: 100vw;
+    width: 99.3vw;
     position: relative;
 }
 
@@ -72,6 +72,25 @@ img {
     height: 5vh;
     margin-bottom: 5vh;
 }
+
+/* -------------------------------------------------------------------------------------------- */
+/* Autocomplete */
+#suggestions div {
+  border-bottom: 1px solid #ddd;
+  padding: 5px;
+  background: #f9f9f9;
+  align-items: center;
+  /*  */
+  width: 15vw;
+  height: 5vh;
+  margin-bottom: 2vh;
+  margin-top: 5vh;
+}
+
+#suggestions div:hover {
+  background: #e0e0e0;
+}
+
 
 /* --------------------------------------------------------------------------------------------*/
 /* Switch */

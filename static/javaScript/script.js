@@ -1,17 +1,59 @@
 
 
-if (!localStorage.getItem('state')) {
-    localStorage.setItem('state', 'true');
-};
+document.addEventListener("DOMContentLoaded", () => {
+    const cityInput = document.getElementById("City");
+    const suggestionsBox = document.getElementById("suggestions");
+
+    cityInput.addEventListener("input", () => {
+        const query = cityInput.value;
+        if (query.length > 2) {
+            fetch(`/autocomplete?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionsBox.innerHTML = "";
+                    data.forEach(location => {
+                        const suggestion = document.createElement("div");
+                        suggestion.textContent = location;
+                        suggestion.style.padding = "5px";
+                        suggestion.style.cursor = "pointer";
+                        suggestion.addEventListener("click", () => {
+                            cityInput.value = location;
+                            suggestionsBox.innerHTML = "";
+                        });
+                        suggestionsBox.appendChild(suggestion);
+                        console.log(suggestion);
+                    });
+                })
+                .catch(error => console.error("Error fetching autocomplete data:", error));
+        } else {
+            suggestionsBox.innerHTML = "";
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!suggestionsBox.contains(e.target) && e.target !== cityInput) {
+            suggestionsBox.innerHTML = "";
+        }
+    });
+
+    if (!localStorage.getItem('state')) {
+        localStorage.setItem('state', 'true');
+    };
+    
+    const box = document.getElementById("switchBox");
+    
+    if (localStorage.getItem('state') === 'true') {
+        box.setAttribute("checked", true);
+    }
+    else {
+        box.removeAttribute("checked");
+    };
+});
+
+
+//  working 
 
 const box = document.getElementById("switchBox");
-
-if (localStorage.getItem('state') === 'true') {
-    box.setAttribute("checked", 'checked');
-}
-else {
-    box.removeAttribute("checked");
-};
 
 box.addEventListener("click", function() {
 
@@ -22,11 +64,10 @@ box.addEventListener("click", function() {
     const content = document.getElementById("content");
 
     let send = {
-        city: city.innerHTML,
         state: localStorage.getItem('state')
     };
-    
-    fetch('/', {
+    console.log(send);
+    fetch('/toggle-unit', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -39,9 +80,6 @@ box.addEventListener("click", function() {
         city.innerHTML = data.city;
         region.innerHTML = data.region;
         content.innerHTML = data.content;
-    })
-    .then(() => {
-        // window.location.reload();
     })
     .catch(error => {
         console.error('Error:', error);

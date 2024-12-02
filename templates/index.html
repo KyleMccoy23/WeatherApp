@@ -24,8 +24,10 @@
             <p id="region">{{ region }}</p>
         </div>
         <h2 id="content">{{ content }}</h2>
-        <form action="/" method="post">
-            <input type="text" name="City" id="City" placeholder="Enter your city">
+        <form action="/weather" method="post">
+            <input type="text" name="City" id="City" placeholder="Enter your city" autocomplete="off">
+            <!-- temp - style="border: 1px solid #ccc; max-width: 200px; position: absolute; background: white; z-index: 1000;" -->
+            <div id="suggestions" ></div> 
             <input type="submit" value="Get Weather" id="submit">
         </form>
     </main>
