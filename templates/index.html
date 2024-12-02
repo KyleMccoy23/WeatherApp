@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <title>Weather App</title>
+    <link rel="icon" href="../static/img/weather.png">
+</head>
+<body>
+    <nav>
+        <h1>Whats the forcast</h1>
+            <label class="switch">
+                <input type="checkbox" id="switchBox">
+                <span class="slider round"></span>
+            </label>
+        </form>
+    </nav>
+    <main>
+        <img src='../static/img/weather.png' alt={{ text }}>
+        <div id="locationContainer">
+            <p id="city">{{ city }},</p>
+            <p id="region">{{ region }}</p>
+        </div>
+        <h2 id="content">{{ content }}</h2>
+        <form action="/weather" method="post">
+            <input type="text" name="City" id="City" placeholder="Enter your city" autocomplete="off">
+            <!-- temp - style="border: 1px solid #ccc; max-width: 200px; position: absolute; background: white; z-index: 1000;" -->
+            <div id="suggestions" ></div> 
+            <input type="submit" value="Get Weather" id="submit">
+        </form>
+    </main>
+
+    <script src="../static/javaScript/script.js"></script>
+</body>
+</html>
