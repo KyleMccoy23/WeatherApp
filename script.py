@@ -16,8 +16,8 @@ def getWeather(location: str):
     query = f'http://api.weatherapi.com/v1/current.json?key={key}&q={location}&aqi=no'
     response = requests.get(query).json()
 
-    if response.get('error'):
-        raise Exception(response['error'].get('message', 'Unknown error'))
+    # if response.get('error'):
+    #     raise Exception(response['error'].get('message', 'Unknown error'))
 
     temp_c = response['current']['temp_c']
     temp_f = response['current']['temp_f']

@@ -4,11 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const tabIdKey = "weatherTabId";
 
-    // Check if a tab ID exists in localStorage
-    if (!localStorage.getItem(tabIdKey)) {
+    // Check if a tab ID exists in sessionStorage
+    if (!sessionStorage.getItem(tabIdKey)) {
         // Generate a new unique tab ID
         const tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        localStorage.setItem(tabIdKey, tabId);
+        sessionStorage.setItem(tabIdKey, tabId);
     }
 
     const cityInput = document.getElementById("City");
@@ -46,13 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    if (!localStorage.getItem('state')) {
-        localStorage.setItem('state', 'true');
+    if (!sessionStorage.getItem('state')) {
+        sessionStorage.setItem('state', 'true');
     };
     
     const box = document.getElementById("switchBox");
     
-    if (localStorage.getItem('state') === 'true') {
+    if (sessionStorage.getItem('state') === 'true') {
         box.setAttribute("checked", true);
     }
     else {
@@ -63,12 +63,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const submitButton = document.getElementById('submit')
 
-submitButton.addEventListener('click', fetchWeather)
+submitButton.addEventListener('click', () => {
 
-function fetchWeather(city) {
-    const tabId = localStorage.getItem("weatherTabId");
 
-    const city = document.getElementById("City");
+    const tabId = sessionStorage.getItem("weatherTabId");
+
+    // const city = document.getElementById("City");
     const region = document.getElementById("region");
     const content = document.getElementById("content");
 
@@ -77,7 +77,7 @@ function fetchWeather(city) {
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ City: city, tabId: tabId }),
+        body: JSON.stringify({ City: cityInput, tabId: tabId }),
     })
         .then((response) => response.json())
         .then((data) => {
@@ -87,7 +87,7 @@ function fetchWeather(city) {
             content.innerHTML = data.content;
         })
         .catch((error) => console.error("Error:", error));
-}
+});
 
 
 //  working 
@@ -96,14 +96,14 @@ const box = document.getElementById("switchBox");
 
 box.addEventListener("click", function() {
 
-    localStorage.setItem('state', box.checked);
+    sessionStorage.setItem('state', box.checked);
 
     const city = document.getElementById("City");
     const region = document.getElementById("region");
     const content = document.getElementById("content");
 
     let send = {
-        state: localStorage.getItem('state')
+        state: sessionStorage.getItem('state')
     };
     console.log(send);
     fetch('/toggle-unit', {
