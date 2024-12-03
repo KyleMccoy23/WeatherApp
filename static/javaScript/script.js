@@ -2,14 +2,29 @@
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    const tabIdKey = "weatherTabId";
+    const tabId = "tabId";
 
-    // Check if a tab ID exists in localStorage
-    if (!localStorage.getItem(tabIdKey)) {
+    // Check if a tab ID exists in sessionStorage
+    if (!sessionStorage.getItem(tabId)) {
         // Generate a new unique tab ID
         const tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        localStorage.setItem(tabIdKey, tabId);
+        sessionStorage.setItem('tabId', tabId);
     }
+
+    fetch('/initialize-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({tabId: sessionStorage.getItem('tabId')})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 
     const cityInput = document.getElementById("City");
     const suggestionsBox = document.getElementById("suggestions");
@@ -46,13 +61,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    if (!localStorage.getItem('state')) {
-        localStorage.setItem('state', 'true');
+    if (!sessionStorage.getItem('state')) {
+        sessionStorage.setItem('state', 'true');
     };
     
     const box = document.getElementById("switchBox");
     
-    if (localStorage.getItem('state') === 'true') {
+    if (sessionStorage.getItem('state') === 'true') {
         box.setAttribute("checked", true);
     }
     else {
@@ -60,34 +75,38 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 });
 
+const city = document.getElementById("City");
+const region = document.getElementById("region");
+const content = document.getElementById("content");
 
 const submitButton = document.getElementById('submit')
 
-submitButton.addEventListener('click', fetchWeather)
-
-function fetchWeather(city) {
-    const tabId = localStorage.getItem("weatherTabId");
-
-    const city = document.getElementById("City");
-    const region = document.getElementById("region");
-    const content = document.getElementById("content");
-
+submitButton.addEventListener('input', () => {
+    const tabId = sessionStorage.getItem("tabId");
+    console.log('clicked');
     fetch("/weather", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            'tabId': sessionStorage.getItem('tabId')
         },
         body: JSON.stringify({ City: city, tabId: tabId }),
     })
         .then((response) => response.json())
         .then((data) => {
-            console.log('Success:', data);
-            city.innerHTML = data.city;
-            region.innerHTML = data.region;
-            content.innerHTML = data.content;
+            console.log(data);
+            if (data.error) {
+                console.error("Error fetching weather:", data.error);
+            } else {
+                console.log('Success:', data);
+                city.innerHTML = data.city;
+                region.innerHTML = data.region;
+                content.innerHTML = data.content;
+            }
         })
         .catch((error) => console.error("Error:", error));
-}
+
+});
 
 
 //  working 
@@ -96,20 +115,22 @@ const box = document.getElementById("switchBox");
 
 box.addEventListener("click", function() {
 
-    localStorage.setItem('state', box.checked);
+    sessionStorage.setItem('state', box.checked);
 
-    const city = document.getElementById("City");
-    const region = document.getElementById("region");
-    const content = document.getElementById("content");
+    // const city = document.getElementById("City");
+    // const region = document.getElementById("region");
+    // const content = document.getElementById("content");
 
     let send = {
-        state: localStorage.getItem('state')
+        state: sessionStorage.getItem('state'),
+        tabId: sessionStorage.getItem("tabId")
     };
     console.log(send);
     fetch('/toggle-unit', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'tabId': sessionStorage.getItem('tabId')
         },
         body: JSON.stringify(send)
     })
