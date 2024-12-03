@@ -81,16 +81,16 @@ const content = document.getElementById("content");
 
 const submitButton = document.getElementById('submit')
 
-submitButton.addEventListener('input', () => {
+submitButton.addEventListener('click', () => {
     const tabId = sessionStorage.getItem("tabId");
-    console.log('clicked');
+    const city = document.getElementById("City");
     fetch("/weather", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             'tabId': sessionStorage.getItem('tabId')
         },
-        body: JSON.stringify({ City: city, tabId: tabId }),
+        body: JSON.stringify({ City: city.innerHTML, tabId: tabId }),
     })
         .then((response) => response.json())
         .then((data) => {
@@ -102,6 +102,21 @@ submitButton.addEventListener('input', () => {
                 city.innerHTML = data.city;
                 region.innerHTML = data.region;
                 content.innerHTML = data.content;
+                fetch('/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'tabId': sessionStorage.getItem('tabId')
+                    },
+                    body: JSON.stringify({ tabId: tabId })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
             }
         })
         .catch((error) => console.error("Error:", error));

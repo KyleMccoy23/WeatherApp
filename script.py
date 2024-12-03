@@ -1,3 +1,4 @@
+from math import inf
 from flask_session import Session
 from flask import Flask, jsonify, render_template, request, redirect
 import requests, PIL.Image, io
@@ -17,10 +18,10 @@ app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 degree = True
-last_location = 'toronto'
 
 def getWeather(location: str):
-    global degree, key
+    print("Location: " + str(location))
+    global key
     query = f'http://api.weatherapi.com/v1/current.json?key={key}&q={location}&aqi=no'
     response = requests.get(query).json()
 
@@ -32,7 +33,7 @@ def getWeather(location: str):
     region = response['location']['region']
     city = response['location']['name']
 
-    return {'temp_c':f'{temp_c} °C', 'temp_f':f'{temp_f} °F'}, region, city
+    return {'content':{'temp_c':f'{temp_c} °C', 'temp_f':f'{temp_f} °F'}, 'region':region, 'city':city}
 
 
 def getImage(icon: str):
@@ -46,7 +47,7 @@ def getImage(icon: str):
         image = PIL.Image.open(io.BytesIO(img_data))
         image.save('static/img/weather.png')
 
-content, region, city = getWeather('Toronto')
+info = getWeather('Toronto')
 
 @app.route('/initialize-session', methods=["POST"])
 def initialize_session():
@@ -61,18 +62,26 @@ def initialize_session():
     if tab_id not in session["sessions"]:
         session["sessions"][tab_id] = {
             "degree": 'true',  # Default to Celsius
-            "last_location": "Toronto",  # Default location
-            "data": {'content':content, 'region':region, 'city':city},
+            "last_location": info['city'],  # Default location
+            "data": {'content':info['content'], 'region':info['region'], 'city':info['city']},
         }
     return jsonify({"success": True, 'tabId': tab_id}), 200
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     global content, region, city
-    if degree:
-        return render_template('index.html', content=content['temp_c'], city=city, region=region)
-    else:
-        return render_template('index.html', content=content['temp_f'], city=city, region=region)
+    if request.method == 'POST':
+        try:
+            tab_id = request.headers.get("tabId")
+
+            tab_session = session["sessions"][tab_id]
+            if degree:
+                return render_template('index.html', content=tab_session['data']['content']['temp_c'], city=tab_session['data']['city'], region=tab_session['data']['region'])
+            else:
+                return render_template('index.html', content=tab_session['data']['content']['temp_c'], city=tab_session['data']['city'], region=tab_session['data']['region'])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+    return render_template('index.html', content=info['content']['temp_c'], city=info['city'], region=info['region'])
     
 @app.route('/toggle-unit', methods=["POST"])
 def toggle_unit():
@@ -93,20 +102,21 @@ def toggle_unit():
 @app.route('/weather', methods=["POST"])
 def fetch_weather():
     data = request.get_json()
-    tab_id = request.headers.get("Tab-Id")
+    tab_id = request.headers.get("tabId")
 
-    if not tab_id or "sessions" not in session or tab_id not in session["sessions"]:
+    if tab_id not in session["sessions"].keys():
         return jsonify({"error": "Invalid session"}), 400
 
     tab_session = session["sessions"][tab_id]
-    location = data.get("City", tab_session["last_location"])
-    tab_session["last_location"] = location
+    location = data.get("City")
+    if not location:
+        location = tab_session["last_location"]
+    else:
+        tab_session["last_location"] = location
 
-    # Example weather data (replace with actual API call)
-    content = f"Weather in {location}: 20°C"
-    tab_session["content"] = content  # Save content in session
+    tab_session["data"] = getWeather(location)
 
-    return jsonify({"content": content, "tab_id": tab_id})
+    return jsonify({"content": tab_session["data"]['content'], "region": tab_session["data"]['region'], "city": tab_session["data"]['city'], "tab_id": tab_id})
 
 @app.route('/debug-session', methods=["GET"])
 def debug_session():
