@@ -1,5 +1,8 @@
+from flask_session import Session
 from flask import Flask, jsonify, render_template, request, redirect
 import requests, PIL.Image, io
+
+from flask import session
 
 from os import getenv
 from dotenv import load_dotenv
@@ -7,6 +10,11 @@ load_dotenv()
 key = getenv('API_KEY')
 
 app = Flask(__name__)
+
+SK = getenv('SK')
+app.secret_key = SK
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 
 degree = True
 last_location = 'toronto'
@@ -40,7 +48,25 @@ def getImage(icon: str):
 
 content, region, city = getWeather('Toronto')
 
-@app.route('/', methods=["GET"])
+@app.route('/initialize-session', methods=["POST"])
+def initialize_session():
+    tab_id = request.get_json().get("tabId")
+
+    if not tab_id:
+        return jsonify({"error": "Tab ID missing"}), 400
+
+    if "sessions" not in session:
+        session["sessions"] = {}  # Initialize a dictionary for tab-specific sessions
+
+    if tab_id not in session["sessions"]:
+        session["sessions"][tab_id] = {
+            "degree": 'true',  # Default to Celsius
+            "last_location": "Toronto",  # Default location
+            "data": {'content':content, 'region':region, 'city':city},
+        }
+    return jsonify({"success": True, 'tabId': tab_id}), 200
+
+@app.route('/', methods=['POST', 'GET'])
 def index():
     global content, region, city
     if degree:
@@ -50,45 +76,41 @@ def index():
     
 @app.route('/toggle-unit', methods=["POST"])
 def toggle_unit():
-    global degree, content
-    try:
-        if request is None:
-            raise Exception
-        if request.is_json:
-            data = request.json
-            state = data.get('state')
-            if state == 'true':
-                degree = True
-                return jsonify({'content':content['temp_c'], 'region':region, 'city':city}), 200
-            else:
-                degree = False
-                return jsonify({'content':content['temp_f'], 'region':region, 'city':city}), 200
-            
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e), "reason": "Not Json"}), 500
+    data = request.get_json()
+    tab_id = request.headers.get("tabId")
+
+    if tab_id not in session["sessions"].keys():
+        return jsonify({"error": "Invalid session"}), 400
+
+    tab_session = session["sessions"][tab_id]
+    state = data.get("state")
+    tab_session["degree"] = state
+    if state == 'true':
+        return jsonify({"success": True, 'content':tab_session["data"]['content']['temp_c'], 'region':tab_session["data"]['region'], 'city':tab_session["data"]['city']})
+    else:
+        return jsonify({"success": True, 'content':tab_session["data"]['content']['temp_f'], 'region':tab_session["data"]['region'], 'city':tab_session["data"]['city']})
 
 @app.route('/weather', methods=["GET"])
 def fetch_weather():
-    global content, region, city, last_location, degree
-    try:
-        if request.is_json:
-            data = request.json
-            location = data.get('City', last_location)
-            degree = data.get('state', 'true') == 'true'
-        else:
-            location = request.form.get('City', last_location)
+    data = request.get_json()
+    tab_id = request.headers.get("Tab-Id")
 
-        if not location.strip():
-            location = last_location
+    if not tab_id or "sessions" not in session or tab_id not in session["sessions"]:
+        return jsonify({"error": "Invalid session"}), 400
 
-        content, region, city = getWeather(location)
-        last_location = location
+    tab_session = session["sessions"][tab_id]
+    location = data.get("City", tab_session["last_location"])
+    tab_session["last_location"] = location
 
-        return redirect('/')
-    except Exception as e:
-        # Handle errors and return fallback weather data
-        return jsonify({"error": str(e), "content": content, "region": region, "city": city}), 500
-        # return redirect('/')
+    # Example weather data (replace with actual API call)
+    content = f"Weather in {location}: 20°C"
+    tab_session["content"] = content  # Save content in session
+
+    return jsonify({"content": content, "tab_id": tab_id})
+
+@app.route('/debug-session', methods=["GET"])
+def debug_session():
+    return jsonify({"sessions": session.get("sessions", {})})
 
 
 @app.route('/autocomplete', methods=["GET"])
