@@ -73,7 +73,7 @@ submitButton.addEventListener('click', () => {
     const content = document.getElementById("content");
 
     fetch("/weather", {
-        method: "POST",
+        method: "GET",
         headers: {
             "Content-Type": "application/json",
         },

@@ -67,7 +67,7 @@ def toggle_unit():
     except Exception as e:
         return jsonify({"success": False, "error": str(e), "reason": "Not Json"}), 500
 
-@app.route('/weather', methods=["POST"])
+@app.route('/weather', methods=["GET"])
 def fetch_weather():
     global content, region, city, last_location, degree
     try:
