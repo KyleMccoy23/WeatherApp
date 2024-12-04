@@ -4,11 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const tabId = "tabId";
 
-    // Check if a tab ID exists in localStorage
-    if (!localStorage.getItem(tabIdKey)) {
+    // Check if a tab ID exists in sessionStorage
+    if (!sessionStorage.getItem(tabId)) {
         // Generate a new unique tab ID
         const tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        localStorage.setItem(tabIdKey, tabId);
+        sessionStorage.setItem(tabId, tabId);
     }
 
     fetch('/initialize-session', {
@@ -81,13 +81,14 @@ const submitButton = document.getElementById('submit')
 submitButton.addEventListener('click', fetchWeather)
 
 function fetchWeather(city) {
-    const tabId = localStorage.getItem("weatherTabId");
+    const tabId = sessionStorage.getItem("weatherTabId");
 
     const city = document.getElementById("City");
     const region = document.getElementById("region");
     const content = document.getElementById("content");
 
 const submitButton = document.getElementById('submit')
+}
 
 submitButton.addEventListener('input', () => {
     const tabId = sessionStorage.getItem("tabId");
@@ -113,7 +114,7 @@ submitButton.addEventListener('input', () => {
             }
         })
         .catch((error) => console.error("Error:", error));
-}
+});
 
 
 //  working 
@@ -129,7 +130,7 @@ box.addEventListener("click", function() {
     // const content = document.getElementById("content");
 
     let send = {
-        state: localStorage.getItem('state')
+        state: sessionStorage.getItem('state')
     };
     console.log(send);
     fetch('/toggle-unit', {
