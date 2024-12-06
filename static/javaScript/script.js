@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!sessionStorage.getItem(tabId)) {
         // Generate a new unique tab ID
         const tabId = `tab_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        sessionStorage.setItem('tabId', tabId);
+        sessionStorage.setItem(tabId, tabId);
     }
 
     fetch('/initialize-session', {
@@ -139,8 +139,7 @@ box.addEventListener("click", function() {
     // const content = document.getElementById("content");
 
     let send = {
-        state: sessionStorage.getItem('state'),
-        tabId: sessionStorage.getItem("tabId")
+        state: sessionStorage.getItem('state')
     };
     console.log(send);
     fetch('/toggle-unit', {

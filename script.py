@@ -25,8 +25,8 @@ def getWeather(location: str):
     query = f'http://api.weatherapi.com/v1/current.json?key={key}&q={location}&aqi=no'
     response = requests.get(query).json()
 
-    if response.get('error'):
-        raise Exception(response['error'].get('message', 'Unknown error'))
+    # if response.get('error'):
+    #     raise Exception(response['error'].get('message', 'Unknown error'))
 
     temp_c = response['current']['temp_c']
     temp_f = response['current']['temp_f']
@@ -101,7 +101,7 @@ def toggle_unit():
     else:
         return jsonify({"success": True, 'content':tab_session["data"]['content']['temp_f'], 'region':tab_session["data"]['region'], 'city':tab_session["data"]['city']})
 
-@app.route('/weather', methods=["POST"])
+@app.route('/weather', methods=["GET"])
 def fetch_weather():
     data = request.get_json()
     tab_id = request.headers.get("tabId")
