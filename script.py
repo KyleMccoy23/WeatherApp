@@ -1,4 +1,5 @@
 from math import inf
+import re
 from flask_session import Session
 from flask import Flask, jsonify, render_template, request, redirect
 import requests, PIL.Image, io
@@ -20,7 +21,6 @@ Session(app)
 degree = True
 
 def getWeather(location: str):
-    print("Location: " + str(location))
     global key
     query = f'http://api.weatherapi.com/v1/current.json?key={key}&q={location}&aqi=no'
     response = requests.get(query).json()
@@ -67,21 +67,23 @@ def initialize_session():
         }
     return jsonify({"success": True, 'tabId': tab_id}), 200
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/', methods=["POST", "GET"])
 def index():
-    global content, region, city
-    if request.method == 'POST':
-        try:
-            tab_id = request.headers.get("tabId")
-
-            tab_session = session["sessions"][tab_id]
-            if degree:
-                return render_template('index.html', content=tab_session['data']['content']['temp_c'], city=tab_session['data']['city'], region=tab_session['data']['region'])
+    try:
+        if request.method == 'POST':
+            tabID = request.get_json()
+            sessionTab = session["sessions"][tabID['tabId']]
+            if sessionTab['degree'] == 'true':
+                return render_template('index.html', content=sessionTab['data']['content']['temp_c'], city=sessionTab['data']['city'], region=sessionTab['data']['region'])
             else:
-                return render_template('index.html', content=tab_session['data']['content']['temp_c'], city=tab_session['data']['city'], region=tab_session['data']['region'])
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-    return render_template('index.html', content=info['content']['temp_c'], city=info['city'], region=info['region'])
+                return render_template('index.html', content=sessionTab['data']['temp_f'], city=sessionTab['data']['city'], region=sessionTab['data']['region'])
+        else:
+            info = getWeather('Toronto')
+            return render_template('index.html', content=info['content']['temp_c'], city=info['city'], region=info['region'])
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+    
     
 @app.route('/toggle-unit', methods=["POST"])
 def toggle_unit():

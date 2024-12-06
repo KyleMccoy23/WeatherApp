@@ -55,11 +55,61 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.addEventListener("click", (e) => {
-        if (!suggestionsBox.contains(e.target) && e.target !== cityInput) {
-            suggestionsBox.innerHTML = "";
-        }
+    // document.addEventListener("click", (e) => {
+    //     if (!suggestionsBox.contains(e.target) && e.target !== cityInput) {
+    //         suggestionsBox.innerHTML = "";
+    //     }
+    // });
+
+    const city = document.getElementById("City");
+    const region = document.getElementById("region");
+    const content = document.getElementById("content");
+
+    const submitButton = document.getElementById('submit')
+
+    submitButton.addEventListener('click', () => {
+        const tabId = sessionStorage.getItem("tabId");
+        console.log(tabId, city.value);
+        
+        fetch("/weather", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'tabId': sessionStorage.getItem('tabId')
+            },
+            body: JSON.stringify({ City: city.value, tabId: tabId }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+                if (data.error) {
+                    console.error("Error fetching weather:", data.error);
+                } else {
+                    console.log('Success:', data);
+                    city.innerHTML = data.city;
+                    region.innerHTML = data.region;
+                    content.innerHTML = data.content;
+                    fetch('/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ tabId: tabId })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Success:', data);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            })
+            .catch((error) => console.error("Error:", error));
+
     });
+
+
 
     if (!sessionStorage.getItem('state')) {
         sessionStorage.setItem('state', 'true');
@@ -73,54 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
     else {
         box.removeAttribute("checked");
     };
-});
-
-const city = document.getElementById("City");
-const region = document.getElementById("region");
-const content = document.getElementById("content");
-
-const submitButton = document.getElementById('submit')
-
-submitButton.addEventListener('click', () => {
-    const tabId = sessionStorage.getItem("tabId");
-    const city = document.getElementById("City");
-    fetch("/weather", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            'tabId': sessionStorage.getItem('tabId')
-        },
-        body: JSON.stringify({ City: city.innerHTML, tabId: tabId }),
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            console.log(data);
-            if (data.error) {
-                console.error("Error fetching weather:", data.error);
-            } else {
-                console.log('Success:', data);
-                city.innerHTML = data.city;
-                region.innerHTML = data.region;
-                content.innerHTML = data.content;
-                fetch('/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'tabId': sessionStorage.getItem('tabId')
-                    },
-                    body: JSON.stringify({ tabId: tabId })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Success:', data);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            }
-        })
-        .catch((error) => console.error("Error:", error));
-
 });
 
 
