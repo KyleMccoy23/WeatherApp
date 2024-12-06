@@ -1,6 +1,8 @@
 
 
+
 document.addEventListener("DOMContentLoaded", () => {
+    
 
     const tabId = "tabId";
 
@@ -61,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //     }
     // });
 
-    const city = document.getElementById("City");
+    
     const region = document.getElementById("region");
     const content = document.getElementById("content");
 
@@ -86,29 +88,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     console.error("Error fetching weather:", data.error);
                 } else {
                     console.log('Success:', data);
+                    
+                    city.value = '';
+                    suggestionsBox.innerHTML = '';
+
                     city.innerHTML = data.city;
                     region.innerHTML = data.region;
                     content.innerHTML = data.content;
-                    fetch('/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ tabId: tabId })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            console.log('Success:', data);
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
                 }
             })
             .catch((error) => console.error("Error:", error));
 
     });
-
 
 
     if (!sessionStorage.getItem('state')) {
@@ -124,7 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
         box.removeAttribute("checked");
     };
 });
-
 
 //  working 
 
@@ -161,4 +151,3 @@ box.addEventListener("click", function() {
         console.error('Error:', error);
     });
 });
-

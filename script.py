@@ -1,10 +1,8 @@
-from math import inf
 import re
 from flask_session import Session
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, render_template, request, redirect, session
 import requests, PIL.Image, io
-
-from flask import session
+from flask_socketio import SocketIO
 
 from os import getenv
 from dotenv import load_dotenv
@@ -12,6 +10,8 @@ load_dotenv()
 key = getenv('API_KEY')
 
 app = Flask(__name__)
+
+socketio = SocketIO(app)
 
 SK = getenv('SK')
 app.secret_key = SK
@@ -34,7 +34,6 @@ def getWeather(location: str):
     city = response['location']['name']
 
     return {'content':{'temp_c':f'{temp_c} °C', 'temp_f':f'{temp_f} °F'}, 'region':region, 'city':city}
-
 
 def getImage(icon: str):
         icon = icon
@@ -69,22 +68,20 @@ def initialize_session():
 
 @app.route('/', methods=["POST", "GET"])
 def index():
-    try:
-        if request.method == 'POST':
-            tabID = request.get_json()
-            sessionTab = session["sessions"][tabID['tabId']]
-            if sessionTab['degree'] == 'true':
-                return render_template('index.html', content=sessionTab['data']['content']['temp_c'], city=sessionTab['data']['city'], region=sessionTab['data']['region'])
-            else:
-                return render_template('index.html', content=sessionTab['data']['temp_f'], city=sessionTab['data']['city'], region=sessionTab['data']['region'])
+    info = getWeather('Toronto')
+    # r = requests.get('localhost:5000').json()
+    r=''
+    if r:
+        tab_id = r['tabId']
+        tab_session = session["sessions"][tab_id]
+        data = tab_session["data"]
+        if tab_session["degree"] == 'true':
+            return render_template('index.html', content=data['content']['temp_c'], city=data['city'], region=data['region'])
         else:
-            info = getWeather('Toronto')
-            return render_template('index.html', content=info['content']['temp_c'], city=info['city'], region=info['region'])
-    except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 400
-    
-    
+            return render_template('index.html', content=data['content']['temp_f'], city=data['city'], region=data['region'])
+    else:
+        return render_template('index.html', content=info['content']['temp_c'], city=info['city'], region=info['region'])
+
 @app.route('/toggle-unit', methods=["POST"])
 def toggle_unit():
     data = request.get_json()
@@ -101,7 +98,7 @@ def toggle_unit():
     else:
         return jsonify({"success": True, 'content':tab_session["data"]['content']['temp_f'], 'region':tab_session["data"]['region'], 'city':tab_session["data"]['city']})
 
-@app.route('/weather', methods=["GET"])
+@app.route('/weather', methods=["GET", "POST"])
 def fetch_weather():
     data = request.get_json()
     tab_id = request.headers.get("tabId")
@@ -117,13 +114,14 @@ def fetch_weather():
         tab_session["last_location"] = location
 
     tab_session["data"] = getWeather(location)
-
-    return jsonify({"content": tab_session["data"]['content'], "region": tab_session["data"]['region'], "city": tab_session["data"]['city'], "tab_id": tab_id})
+    if tab_session["degree"] == 'true':
+        return jsonify({"content": tab_session["data"]['content']['temp_c'], "region": tab_session["data"]['region'], "city": tab_session["data"]['city'], "tab_id": tab_id})
+    else:
+        return jsonify({"content": tab_session["data"]['content']['temp_f'], "region": tab_session["data"]['region'], "city": tab_session["data"]['city'], "tab_id": tab_id})
 
 @app.route('/debug-session', methods=["GET"])
 def debug_session():
     return jsonify({"sessions": session.get("sessions", {})})
-
 
 @app.route('/autocomplete', methods=["GET"])
 def autocomplete():
@@ -135,9 +133,8 @@ def autocomplete():
     suggestions = [result.get('formatted') for result in response.get('results', [])]
     return jsonify(suggestions)
 
-
 def main() -> None:
-    app.run()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
